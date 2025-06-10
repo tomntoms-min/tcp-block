@@ -53,6 +53,7 @@ void inject_tcp(const ip *ip_src, const tcphdr *tcp_src, const char *data, int d
     ip *iph = (ip *)buf;
     tcphdr *tcph = (tcphdr *)(buf + sizeof(ip));
     char *payload = buf + sizeof(ip) + sizeof(tcphdr);
+
     if (data && data_len > 0)
         memcpy(payload, data, data_len);
 
@@ -76,6 +77,7 @@ void inject_tcp(const ip *ip_src, const tcphdr *tcp_src, const char *data, int d
     int ip_len = ip_src->ip_hl * 4;
     int tcp_len = tcp_src->th_off * 4;
     int orig_data_len = ntohs(ip_src->ip_len) - ip_len - tcp_len;
+
     tcph->th_seq = htonl((flags & TH_RST) ? seq_base + orig_data_len : ack_base);
     tcph->th_ack = (flags & TH_RST) ? 0 : htonl(seq_base + orig_data_len);
     tcph->th_off = 5;
@@ -83,7 +85,14 @@ void inject_tcp(const ip *ip_src, const tcphdr *tcp_src, const char *data, int d
     tcph->th_win = htons(65535);
     tcph->th_sum = 0;
 
-    PseudoHeader pseudo = {iph->ip_src.s_addr, iph->ip_dst.s_addr, 0, IPPROTO_TCP, htons(sizeof(tcphdr) + data_len)};
+    // 🔧 수정된 구조체 초기화 방식
+    PseudoHeader pseudo;
+    pseudo.src = iph->ip_src.s_addr;
+    pseudo.dst = iph->ip_dst.s_addr;
+    pseudo.zero = 0;
+    pseudo.proto = IPPROTO_TCP;
+    pseudo.len = htons(sizeof(tcphdr) + data_len);
+
     char pseudo_buf[BUF_SIZE] = {};
     memcpy(pseudo_buf, &pseudo, sizeof(pseudo));
     memcpy(pseudo_buf + sizeof(pseudo), tcph, sizeof(tcphdr) + data_len);
@@ -97,14 +106,15 @@ void inject_tcp(const ip *ip_src, const tcphdr *tcp_src, const char *data, int d
 
     int on = 1;
     setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
-    sockaddr_in to{};
+
+    sockaddr_in to;
+    memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_addr = iph->ip_dst;
 
     sendto(sock, buf, sizeof(ip) + sizeof(tcphdr) + data_len, 0, (sockaddr *)&to, sizeof(to));
     close(sock);
 }
-
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         usage();
