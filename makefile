@@ -2,7 +2,7 @@
 CXX = g++
 CXXFLAGS = -Wall -O2 -std=c++11
 LIBS = -lpcap
-TARGET = blocker
+TARGET = tcp-block
 SRC = main.cpp
 
 all: $(TARGET)
