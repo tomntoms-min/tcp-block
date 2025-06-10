@@ -13,7 +13,7 @@ const string REDIRECT_MSG = "HTTP/1.1 302 Found\r\nLocation: http://warning.or.k
 const int BUF_SIZE = 4096;
 
 void usage() {
-    cout << "Usage: ./blocker <interface> <pattern>\n";
+    cout << "Usage: ./tcp-block <interface> <pattern>\n";
 }
 
 uint16_t checksum(uint16_t *buf, int len) {
