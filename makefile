@@ -1,10 +1,9 @@
 
-
 CXX = g++
 CXXFLAGS = -Wall -O2
 LIBS = -lpcap
 TARGET = blocker
-SRC = blocker.cpp
+SRC = main.cpp
 
 all: $(TARGET)
 
